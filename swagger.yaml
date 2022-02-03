@@ -1,0 +1,172 @@
+swagger: "2.0"
+info:
+  description: "This is a mock server."
+  version: "0.1.0"
+  title: "Swagger qdoctor"
+basePath: "/"
+tags:
+- name: "user"
+  description: "Operations about user."
+- name: "emias"
+  description: "Proxy for emias."
+- name: "notifications"
+  description: "Operations about notifications."
+schemes:
+- "https"
+- "http"
+paths:
+  /get_or_create:
+    post:
+      tags:
+      - "user"
+      summary: "Get current user or create new user"
+      description: "Getting based on cookie. Creatting base on json in request."
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "user_data"
+        in: "body"
+        description: "User parameters for user creation."
+        required: false
+        schema:
+          $ref: "#/definitions/User"
+      responses:
+        "200":
+          description: "Success searching of user."
+        "201":
+          description: "Success creation of user."
+  /specialists:
+    get:
+      tags:
+      - "emias"
+      summary: "Get all specialists"
+      description: "Proxy for [getSpecialitiesInfo](https://emias.info/api/new/eip5orch?getSpecialitiesInfo) on emias."
+      produces:
+      - "application/json"
+      responses:
+        "200":
+          description: "Specialists"
+          schema:
+            $ref: "#/definitions/Specialists"
+  /doctors:
+    get:
+      tags:
+      - "emias"
+      summary: "Gettings doctors by specialist_id"
+      description: "Proxy for [getDoctorsInfo](https://emias.info/api/new/eip5orch?getDoctorsInfo) on emias."
+      operationId: "findPetsByTags"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "specialist_id"
+        in: "query"
+        description: "ID of specialist"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Doctors"
+          schema:
+            $ref: "#/definitions/Doctors"
+  /schedule:
+    get:
+      tags:
+      - "emias"
+      summary: "Gettings schedule by doctor_id"
+      description: "Proxy for available schedule [getAvailableResourceScheduleInfo](https://emias.info/api/new/eip5orch?getAvailableResourceScheduleInfo) and for lpu schedule [get_lpu_schedule_info](https://emias.info/api/new/eip) on emias."
+      produces:
+      - "application/json"
+      parameters:
+      - name: "doctor_id"
+        in: "query"
+        description: "ID of specialist"
+        required: true
+        type: "integer"
+        format: "int64"
+      responses:
+        "200":
+          description: "Schedule (sorted time intervals)"
+          schema:
+            $ref: "#/definitions/Schedule"
+  /subscribe:
+    post:
+      tags:
+      - "notifications"
+      summary: "Subscribe on notification"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      responses:
+        "201":
+          description: "Created subscription."
+definitions:
+  User:
+    type: "object"
+    required:
+    - "oms_number"
+    - "birth_date"
+    properties:
+      oms_number:
+        type: "string"
+        minLength: 16
+        maxLength: 16
+        pattern: '^\d{16}$'
+        example: 1111111111111111
+      birth_date:
+        type: "string"
+        format: "date-time"
+      email:
+        type: "string"
+        format: "email"
+      telegram:
+        type: "string"
+        pattern: '^@.*?$'
+        example: "@user"
+  Specialist:
+    type: "object"
+    required:
+    - "name"
+    - "id"
+    properties:
+      name:
+        type: "string"
+      id:
+        type: "integer"
+  Specialists:
+    type: array
+    items:
+      $ref: "#/definitions/Specialist"
+  Doctor:
+    type: "object"
+    required:
+    - "name"
+    - "id"
+    properties:
+      name:
+        type: "string"
+      id:
+        type: "integer"
+  Doctors:
+    type: array
+    items:
+      $ref: "#/definitions/Doctor"
+  TimeInterval:
+    type: object
+    properties:
+      date:
+        type: "string"
+        format: "date"
+      start_time:
+        type: "string"
+        format: "time"
+      end_time:
+        type: "string"
+        format: "time"
+  Schedule:
+    type: array
+    items:
+      $ref: "#/definitions/TimeInterval"
